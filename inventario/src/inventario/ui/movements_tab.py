@@ -39,6 +39,7 @@ class MovementsTab(ttk.Frame):
         self.product_var = tk.StringVar()
         self.product_combo = ttk.Combobox(form, textvariable=self.product_var, state="readonly", width=32)
         self.product_combo.grid(row=0, column=1, pady=4, sticky="w")
+        self.product_combo.bind("<<ComboboxSelected>>", lambda _e: self._prefill_sale_price())
 
         ttk.Label(form, text="Tipo:").grid(row=0, column=2, sticky="e", pady=4, padx=(16, 0))
         tipos = TIPOS_TODOS if session.is_admin else TIPOS_CAPTURISTA
@@ -104,6 +105,7 @@ class MovementsTab(ttk.Frame):
             # selecciona para que quede visible que se agrego (si ya habia
             # una seleccion previa, el texto del combo no cambiaba solo).
             self.product_var.set(new_labels[0])
+        self._prefill_sale_price()
 
     def refresh(self):
         self.refresh_products()
@@ -141,12 +143,24 @@ class MovementsTab(ttk.Frame):
             self.price_label.grid()
             self.note_label.grid_remove()
             self.note_entry.grid_remove()
+            self._prefill_sale_price()
         else:  # Ajuste
             self.quantity_label.configure(text="Nueva existencia total:")
             self.price_label.grid_remove()
             self.price_entry.grid_remove()
             self.note_label.grid()
             self.note_entry.grid()
+
+    def _prefill_sale_price(self):
+        """En una venta, propone el precio de venta ya definido en el catalogo
+        (queda editable por si esa venta puntual necesita otro precio)."""
+        if self.type_var.get() != "Venta":
+            return
+        product_id = self._products_by_label.get(self.product_var.get())
+        if product_id is None:
+            return
+        product = models.get_product(self.db.conn, product_id)
+        self.price_var.set(f"{product['sale_price']:g}")
 
     def _submit(self):
         label = self.product_var.get()
@@ -189,7 +203,10 @@ class MovementsTab(ttk.Frame):
             return
 
         self.quantity_var.set("")
-        self.price_var.set("")
         self.note_var.set("")
+        if tipo == "Venta":
+            self._prefill_sale_price()
+        else:
+            self.price_var.set("")
         self.refresh()
         messagebox.showinfo("Listo", f"{tipo} registrada correctamente.")

@@ -120,10 +120,21 @@ def run():
 
     movements_tab.type_var.set("Venta")
     movements_tab._update_fields()
+    root.update()
+    # El precio de venta debe proponerse solo, tomado del catalogo (199.90),
+    # pero seguir siendo editable para esa venta puntual.
+    assert abs(float(movements_tab.price_var.get()) - 199.90) < 1e-9, (
+        f"el precio de venta debia proponerse en 199.90, mostro: {movements_tab.price_var.get()!r}"
+    )
     movements_tab.quantity_var.set("4")
-    movements_tab.price_var.set("80")
+    movements_tab.price_var.set("80")  # el usuario lo cambia para esta venta puntual
     movements_tab._submit()
     root.update()
+
+    # Tras registrar, el campo vuelve a proponer el precio de catalogo
+    # (no queda vacio ni con el valor puntual de la venta anterior).
+    assert abs(float(movements_tab.price_var.get()) - 199.90) < 1e-9
+    print("Precio de venta autocompletado desde el catalogo: OK")
 
     product_id = movements_tab._products_by_label[label]
     summary = models.product_summary(app.db.conn, product_id)
