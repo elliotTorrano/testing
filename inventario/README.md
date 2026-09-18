@@ -14,13 +14,30 @@ de cambios y de inicios de sesion.
 
 ## Ejecutar desde codigo fuente
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Linux/Mac: source .venv/bin/activate
+**Windows** (usa el lanzador `py`, instalado junto con Python desde
+python.org; el comando `python` a veces no queda registrado en el PATH):
+
+```bat
+py -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 python main.py
 ```
+
+**Linux/Mac**:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python main.py
+```
+
+En ambos casos, una vez activado el entorno virtual (`.venv`), los comandos
+`python` y `pip` ya apuntan al Python del entorno virtual (no hace falta
+`py` ni `python3` despues de activarlo).
 
 La primera vez que se ejecuta no existe base de datos: la aplicacion pide
 crear la cuenta de **administrador** inicial. A partir de ahi se entra

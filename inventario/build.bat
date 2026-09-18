@@ -5,11 +5,11 @@ setlocal
 cd /d "%~dp0"
 
 if not exist .venv (
-    python -m venv .venv
+    py -m venv .venv
 )
 call .venv\Scripts\activate.bat
 
-pip install --upgrade pip
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 pyinstaller --noconfirm --onefile --windowed --name Inventario --paths src main.py
