@@ -66,28 +66,48 @@ def run():
     assert main_frame.session.role == models.ADMIN
     print("Login y navegacion inicial: OK")
 
-    # --- Crear un producto desde la pestana Productos ---
+    def create_product(sku, name, sale_price):
+        products_tab._new_product()
+        root.update()
+        from inventario.ui.products_tab import ProductDialog
+        dialogs = [w for w in products_tab.winfo_children() if isinstance(w, ProductDialog)]
+        assert dialogs, "debia abrirse el dialogo de nuevo producto"
+        dlg = dialogs[0]
+        dlg.sku_var.set(sku)
+        dlg.name_var.set(name)
+        dlg.sale_price_var.set(str(sale_price))
+        dlg._save()
+        root.update()
+
+    # --- Crear un primer producto desde la pestana Productos ---
     notebook = [w for w in main_frame.winfo_children() if w.winfo_class() == "TNotebook"][0]
     products_tab = notebook.winfo_children()[0]
-    products_tab._new_product()
-    root.update()
-    from inventario.ui.products_tab import ProductDialog
-    product_dialogs = [w for w in products_tab.winfo_children() if isinstance(w, ProductDialog)]
-    assert product_dialogs, "debia abrirse el dialogo de nuevo producto"
-    dlg = product_dialogs[0]
-    dlg.sku_var.set("SKU-TEST")
-    dlg.name_var.set("Producto de prueba UI")
-    dlg.sale_price_var.set("199.90")
-    dlg._save()
-    root.update()
-
+    create_product("SKU-A", "Producto A", 10.0)
     products = models.list_products(app.db.conn)
-    assert any(p["sku"] == "SKU-TEST" for p in products), "el producto no quedo guardado en la BD"
+    assert any(p["sku"] == "SKU-A" for p in products), "el producto no quedo guardado en la BD"
     print("Alta de producto desde la UI: OK")
 
-    # --- Registrar una compra y una venta desde la pestana Movimientos ---
+    # --- Cambiar a la pestana Movimientos debe refrescarla sola (regresion:
+    #     un producto nuevo no aparecia en el combo hasta pulsar "Actualizar"
+    #     ahi manualmente), y con un solo producto debe quedar seleccionado ---
     movements_tab = notebook.winfo_children()[1]
-    movements_tab.refresh_products()
+    notebook.select(movements_tab)
+    root.update()
+    assert movements_tab.product_var.get().startswith("SKU-A")
+
+    # --- Regresion reportada por el usuario: con un producto YA seleccionado,
+    #     crear un segundo producto y refrescar (manualmente o cambiando de
+    #     pestana) debe hacer visible el nuevo producto seleccionandolo,
+    #     no dejarlo "escondido" en la lista sin cambiar el texto del combo ---
+    notebook.select(products_tab)
+    root.update()
+    create_product("SKU-TEST", "Producto de prueba UI", 199.90)
+    notebook.select(movements_tab)
+    root.update()
+    assert movements_tab.product_var.get().startswith("SKU-TEST"), (
+        "el producto recien creado debia quedar seleccionado y visible en el combo, "
+        f"pero sigue mostrando: {movements_tab.product_var.get()!r}"
+    )
     label = [l for l in movements_tab._products_by_label if l.startswith("SKU-TEST")][0]
     movements_tab.product_var.set(label)
 

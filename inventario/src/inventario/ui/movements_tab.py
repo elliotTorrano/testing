@@ -82,15 +82,28 @@ class MovementsTab(ttk.Frame):
         self.refresh()
 
     def refresh_products(self):
+        known_ids = set(self._products_by_label.values())
         self._products_by_label.clear()
         labels = []
+        new_labels = []
         for p in models.list_products(self.db.conn, only_active=True):
             label = f"{p['sku']} - {p['name']}"
             self._products_by_label[label] = p["id"]
             labels.append(label)
+            if p["id"] not in known_ids:
+                new_labels.append(label)
         self.product_combo.configure(values=labels)
-        if labels and not self.product_var.get():
+
+        if not labels:
+            return
+        if not self.product_var.get():
+            # primer llenado del combo: selecciona el primero
             self.product_var.set(labels[0])
+        elif len(new_labels) == 1:
+            # exactamente un producto nuevo desde el ultimo refresco: lo
+            # selecciona para que quede visible que se agrego (si ya habia
+            # una seleccion previa, el texto del combo no cambiaba solo).
+            self.product_var.set(new_labels[0])
 
     def refresh(self):
         self.refresh_products()

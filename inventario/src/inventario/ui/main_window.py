@@ -41,6 +41,18 @@ class MainFrame(ttk.Frame):
             notebook.add(UsersTab(notebook, db=db, session=session), text="Usuarios")
             notebook.add(AuditTab(notebook, db=db), text="Trazabilidad")
 
+        # Una pestana puede quedar desactualizada por cambios hechos en otra
+        # (p.ej. un producto nuevo no aparecia en el combo de Movimientos
+        # hasta pulsar "Actualizar" ahi). Se refresca la pestana visible
+        # cada vez que se entra a ella.
+        notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+
+    def _on_tab_changed(self, event):
+        notebook = event.widget
+        current_tab = notebook.nametowidget(notebook.select())
+        if hasattr(current_tab, "refresh"):
+            current_tab.refresh()
+
     def _show_about(self):
         messagebox.showinfo(
             "Acerca de",
