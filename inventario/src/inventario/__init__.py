@@ -1,1 +1,0 @@
-"""Modulo de inventario provisional."""
